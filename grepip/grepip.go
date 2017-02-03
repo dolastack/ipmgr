@@ -23,7 +23,7 @@ func main() {
 		ifc := getDetails(temp)
 		fmt.Println(ifc.name)
 		for _, i := range ifc.ips {
-			ipconv.DisplayFacts(i)
+			i.DisplayFacts()
 		}
 
 	}
@@ -77,14 +77,16 @@ func getDetails(ifc ifname) *iface {
 	for _, in := range inetsA {
 		if in != "" {
 			//	fmt.Println(getCidr(in))
-			temp := ipconv.ParsInput(string(getCidr(in)))
-			ipfacts = append(ipfacts, temp)
+			ipf := ipconv.ParsInput(string(getCidr(in)))
+			ipf.GetSubnetFacts()
+			ipfacts = append(ipfacts, ipf)
 		}
 	}
 	return NewIfaces(ifc, ipfacts)
 }
 
 func NewIfaces(ifc ifname, temp []*ipconv.Ipfacts) *iface {
+	//constructor for iface struct
 	return &iface{
 		name: ifc,
 		ips:  temp,

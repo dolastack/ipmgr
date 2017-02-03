@@ -12,9 +12,6 @@ func main() {
 	fmt.Scanf("%s", &cidr)
 	ip := ipconv.ParsInput(cidr)
 
-	//ips := ipconv.BinaryToIp(ipconv.IpToBinary(ip))
-	//mask := ipconv.BinaryToIp(ipconv.MaskToBinary(netmask))
-	//	ipconv.GetSubnet(ips, mask)
-	ipconv.GetSubnetFacts(ip)
-	ipconv.DisplayFacts(ip)
+	ip.GetSubnetFacts()
+	ip.DisplayFacts()
 }
