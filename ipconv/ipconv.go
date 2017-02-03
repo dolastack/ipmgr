@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+type cidr string
+
 type Ipfacts struct {
 	ipAddress      []int
 	gateway        []int
@@ -33,12 +35,13 @@ func leftPad2Len(s string, padStr string, overallLen int) string {
 
 func ParsInput(cidr string) *Ipfacts {
 	/** parse **/
+
 	var newip *Ipfacts
 	ip := make([]int, 4)
 	var netmask int
 	pattern := regexp.MustCompile(`(?P<ip>\d{1,3}(?:\.\d{1,3}){3})/(?P<mask>[0-9]{1,2})$`)
-	if pattern.MatchString(cidr) {
-		groups := pattern.FindAllStringSubmatch(cidr, 2)
+	if pattern.MatchString(string(cidr)) {
+		groups := pattern.FindAllStringSubmatch(string(cidr), 2)
 
 		ips := strings.Split(groups[0][1], ".")
 		netmask, _ = strconv.Atoi(groups[0][2])

@@ -2,73 +2,91 @@ package main
 
 import (
 	"fmt"
-	"ipconv"
+	"ipmgr/ipconv"
 	"os/exec"
 	"regexp"
 	"strings"
 )
 
+type ifname string
+type cidr string
+
 type iface struct {
-	name string
-	ips  []ipconv.Ipfacts
+	name ifname
+	ips  []*ipconv.Ipfacts
 }
 
 func main() {
 	ifaces := getIfname()
-	for _, it := range ifaces {
-		if !(it == "lo" || it == "") {
-			println(it)
-
-			cmd := fmt.Sprintf("ip a show %s | egrep  inet ", it)
-
-			inets := runCmd(cmd)
-			inetsA := strings.Split(inets, "\n")
-			for _, in := range inetsA {
-				getIp4(in)
-			}
+	for _, temp := range ifaces {
+		//	println(ifc)
+		ifc := getDetails(temp)
+		fmt.Println(ifc.name)
+		for _, i := range ifc.ips {
+			ipconv.DisplayFacts(i)
 		}
-	}
 
+	}
 }
 
 func runCmd(cmd string) string {
 	out, err := exec.Command("bash", "-c", cmd).Output()
 	if err == nil {
 		return string(out)
+	} else {
+		return ""
 	}
-	return ""
 }
 
-func getIfname() []ifaces {
+func getIfname() []ifname {
 	//get the active interfaces on the system
-	var ifaces []iface
-	var names []string
+	var ifaces []ifname
 	cmd := `netstat -i |  cut -f 1 -d ' '`
 	out, err := exec.Command("bash", "-c", cmd).Output()
 	if err == nil {
 		outs := strings.Split(string(out), "\n")
-		names = outs[2:]
-		fmt.Println(ifaces)
-
-		ifaces = iface{
-			name: ifaces,
-			ips:  []ipconv.Newipfacts(),
+		for _, it := range outs[2:] {
+			if !(it == "" || it == "lo") {
+				ifaces = append(ifaces, ifname(it))
+			}
 		}
+		//	fmt.Println(ifaces)
 	}
 	return ifaces
 }
 
-func getIp4(inet string) {
+func getCidr(inet string) cidr {
+	var thecidr cidr
 	pattern := regexp.MustCompile(`\b(?P<ip>\d{1,3}(?:\.\d{1,3}){3})/(?P<mask>[0-9]{1,2})\b`)
 	if pattern.MatchString(inet) {
 		groups := pattern.FindAllStringSubmatch(inet, 2)
-		fmt.Println(groups[0][0])
+		thecidr = cidr(groups[0][0])
+		//fmt.Println(thecidr)
 	}
+	return thecidr
 }
 
-func NewIfaces(temp []ipconv.Ipfacts) *iface {
+func getDetails(ifc ifname) *iface {
+	//	var ifc
+	var ipfacts []*ipconv.Ipfacts
+	cmd := fmt.Sprintf(`ip a show %s | grep -P 'inet\s'`, ifc)
+
+	inets := runCmd(cmd)
+	inetsA := strings.Split(inets, "\n")
+	//fmt.Println(inetsA)
+	for _, in := range inetsA {
+		if in != "" {
+			//	fmt.Println(getCidr(in))
+			temp := ipconv.ParsInput(string(getCidr(in)))
+			ipfacts = append(ipfacts, temp)
+		}
+	}
+	return NewIfaces(ifc, ipfacts)
+}
+
+func NewIfaces(ifc ifname, temp []*ipconv.Ipfacts) *iface {
 	return &iface{
-		name: "",
+		name: ifc,
 		ips:  temp,
 	}
 }
